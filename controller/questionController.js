@@ -25,6 +25,81 @@ const getAllQuestions = async (req, res) => {
   return res.status(200).json({ questions: questions.map(question => question.toObject({ getters: true })) });
 };
 
+
+const getTotalCount = async (req, res) => {
+  try {
+    const count = await questionModel.countDocuments();
+    return res.status(200).json({ count: count });
+  } catch (err) {
+    return res.status(500).json({ message: 'Fetching count failed, please try again later.' });
+  }
+};
+
+
+const getQuestionsPaginated = async (req, res) => {
+  const { page, limit } = req.query;
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+
+  const results = {};
+
+  if (endIndex < await questionModel.countDocuments().exec()) {
+    results.next = {
+      page: page + 1,
+      limit: limit
+    }
+  }
+
+  if (startIndex > 0) {
+    results.previous = {
+      page: page - 1,
+      limit: limit
+    }
+  }
+
+  try {
+    results.results = await questionModel.find().limit(limit * 1).skip(startIndex).exec();
+    res.paginatedResults = results;
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+
+  let filtered_results = res.paginatedResults.results;
+
+  let finalData = [];
+  // Fetch difficulty names for each document
+
+  for (let i = 0; i < filtered_results.length; i++) {
+    let difficulty;
+    try {
+      difficulty = await difficultyModel.findById(filtered_results[i].difficulty);
+    } catch (err) {
+      return res.status(500).json({ message: 'Fetching difficulty failed, please try again later.' });
+    }
+
+    let category;
+    try {
+      category = await categoryModel.findById(filtered_results[i].category);
+    } catch (err) {
+      return res.status(500).json({ message: 'Fetching category failed, please try again later.' });
+    }
+
+    let obj = {
+      _id: filtered_results[i]._id,
+      question: filtered_results[i].question,
+      options: filtered_results[i].options,
+      answer: filtered_results[i].answer,
+      category: category.name,
+      difficulty: difficulty.name
+    }
+    finalData.push(obj);
+  }
+
+  res.status(200).json({ questions: finalData});
+};
+
+
+
 // /api/question/add
 const addQuestion = async (req, res) => {
   const { question, options, answer, category, difficulty } = req.body;
@@ -264,6 +339,8 @@ const getQuestionsByCategoryAndDifficulty = async (req, res) => {
 
 module.exports = {
   getAllQuestions,
+  getTotalCount,
+  getQuestionsPaginated,
   addQuestion,
   getQuestionById,
   updateQuestion,

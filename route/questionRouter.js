@@ -9,6 +9,8 @@ const router = express.Router();
 router.use(authenticateJwt);
 
 router.get('/all', questionController.getAllQuestions);
+router.get('/all/paginated', authenticateAdmin, questionController.getQuestionsPaginated)
+router.get('/all/count', authenticateAdmin, questionController.getTotalCount)
 router.get('/get/:id', questionController.getQuestionById);
 router.get('/getByCategory/:category', questionController.getQuestionsByCategory);
 router.get('/getByDifficulty/:difficulty', questionController.getQuestionsByDifficulty);
