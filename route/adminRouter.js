@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('path');
 const adminController = require(path.join(__dirname, '..', 'controller', 'adminController'));
-const authenticateJWT = require(path.join(__dirname, '..', 'middleware', 'authenticateJWT'));
+const authenticateJWT = require(path.join(__dirname, '..', 'middleware', 'authenticateJwt'));
 const authenticateAdmin = require(path.join(__dirname, '..', 'middleware', 'authenticateAdmin'));
 const router = express.Router();
 
