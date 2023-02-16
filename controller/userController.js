@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const userModel = require(path.join(__dirname, '..', 'model', 'user'));
 const adminModel = require(path.join(__dirname, '..', 'model', 'admin'));
 const profileModel = require(path.join(__dirname, '..', 'model', 'profile'));
+const statModel = require(path.join(__dirname, '..', 'model', 'stat'));
 
 
 // POST /api/user/signup
@@ -155,4 +156,73 @@ const getUserId = async (req, res) => {
 };
 
 
-module.exports = { signUp, login, getAllUsers, getUserId };
+const deleteUser = async (req, res) => {
+  const { email } = req.params;
+
+  let existingUser;
+  try {
+      existingUser = await userModel.findOne({ email: email });
+  } catch (err) {
+      return res.status(500).json({ message: 'User deletion failed, please try again later' });
+  }
+
+  if (!existingUser) {
+      return res.status(401).json({ message: 'User not found.' });
+  }
+
+
+  try {
+    await existingUser.remove();
+    await statModel.deleteMany({ user: existingUser.id });
+    await profileModel.deleteMany({ userId: existingUser.id });
+    await adminModel.deleteMany({ user: existingUser.id });
+  } catch (err) {
+      return res.status(500).json({ message: 'User deletion failed, please try again later' });
+  }
+
+  return res.status(200).json({ message: 'User deleted successfully.' });
+};
+
+const changePassword = async (req, res) => {
+  const { email } = req.params;
+  const { password, confirmPassword } = req.body;
+
+  if (!email || !password || !confirmPassword) {
+    return res.status(400).json({ message: 'Please enter all fields.' });
+  }
+
+  if (password !== confirmPassword) {
+    return res.status(400).json({ message: 'Passwords do not match.' });
+  }
+
+  let existingUser;
+  try {
+      existingUser = await userModel.findOne({ email: email });
+  } catch (err) {
+      return res.status(500).json({ message: 'Password change failed, please try again later' });
+  }
+
+  if (!existingUser) {
+      return res.status(401).json({ message: 'User not found.' });
+  }
+
+  let hashedPassword;
+  try {
+    hashedPassword = await bcrypt.hash(password, 12);
+  } catch (err) {
+    return res.status(500).json({ message: 'Could not change password, please try again.' });
+  }
+
+  let updatedUser;
+  try {
+    updatedUser = await userModel.findByIdAndUpdate(existingUser.id, { password: hashedPassword }, { new: true });
+  } catch (err) {
+    return res.status(500).json({ message: 'Could not change password, please try again.' });
+  }
+
+  return res.status(200).json({ message: 'Password changed successfully.' });
+};
+
+
+
+module.exports = { signUp, login, getAllUsers, getUserId, deleteUser, changePassword };

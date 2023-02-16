@@ -10,5 +10,7 @@ router.post('/signup', userController.signUp);
 router.post('/login', userController.login);
 router.get('/getUserId', authenticateJwt, userController.getUserId);
 router.get('/all', authenticateJwt, authenticateAdmin, userController.getAllUsers);
+router.put('/changePassword/:email', authenticateJwt, authenticateAdmin, userController.changePassword);
+router.delete('/delete/:email', authenticateJwt, authenticateAdmin, userController.deleteUser);
 
 module.exports = router;
