@@ -11,7 +11,10 @@ const getAllCategories = async (req, res) => {
     return res.status(500).json({ message: 'Fetching categories failed, please try again later.' });
   }
 
-  return res.status(200).json({ categories: categories.map(category => category.toObject({ getters: true })) });
+  return res.status(200).json({
+    categories:
+      categories.map(category => category.toObject({ getters: true }))
+  });
 };
 
 // /api/category/add

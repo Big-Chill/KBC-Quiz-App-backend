@@ -6,10 +6,10 @@ const authenticateAdmin = require(path.join(__dirname, '..', 'middleware', 'auth
 
 const router = express.Router();
 
-router.post('/signup', userController.signUp);
-router.post('/login', userController.login);
 router.get('/getUserId', authenticateJwt, userController.getUserId);
 router.get('/all', authenticateJwt, authenticateAdmin, userController.getAllUsers);
+router.post('/signup', userController.signUp);
+router.post('/login', userController.login);
 router.put('/changePassword/:email', authenticateJwt, authenticateAdmin, userController.changePassword);
 router.delete('/delete/:email', authenticateJwt, authenticateAdmin, userController.deleteUser);
 

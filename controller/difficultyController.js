@@ -10,7 +10,10 @@ const getAllDifficulties = async (req, res) => {
     return res.status(500).json({ message: 'Fetching difficulties failed, please try again later.' });
   }
 
-  return res.status(200).json({ difficulties: difficulties.map(difficulty => difficulty.toObject({ getters: true })) });
+  return res.status(200).json({
+    difficulties:
+      difficulties.map(difficulty => difficulty.toObject({ getters: true }))
+  });
 };
 
 // /api/difficulty/add

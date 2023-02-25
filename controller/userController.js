@@ -8,7 +8,6 @@ const statModel = require(path.join(__dirname, '..', 'model', 'stat'));
 
 
 // POST /api/user/signup
-
 const signUp = async (req, res) => {
   const { email, password } = req.body;
 
@@ -48,7 +47,6 @@ const signUp = async (req, res) => {
 };
 
 // POST /api/user/login
-
 const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -105,7 +103,10 @@ const login = async (req, res) => {
   }
 
 
-  return res.status(200).json({ userId: existingUser.id, email: existingUser.email, token: token, isAdmin: isAdmin ? true : false, profileId: profileId, userCreatedAt: new Date(existingUser.createdAt).getTime() });
+  return res.status(200).json({
+    userId: existingUser.id, email: existingUser.email, token: token, isAdmin: isAdmin ? true : false,
+    profileId: profileId, userCreatedAt: new Date(existingUser.createdAt).getTime()
+  });
 };
 
 

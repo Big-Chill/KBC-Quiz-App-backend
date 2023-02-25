@@ -7,21 +7,44 @@ const difficultyModel = require(path.join(__dirname, '..', 'model', 'difficulty'
 const getAllQuestions = async (req, res) => {
   const { n } = req.query;
   let questions;
-  if (n) {
-    try {
-      questions = await questionModel.find().limit(parseInt(n));
-    } catch (err) {
-      return res.status(500).json({ message: 'Fetching questions failed, please try again later.' });
-    }
-    return res.status(200).json({ questions: questions.map(question => question.toObject({ getters: true })) });
-  }
-
   try {
-    questions = await questionModel.find();
+    questions = await questionModel.find()
   } catch (err) {
     return res.status(500).json({ message: 'Fetching questions failed, please try again later.' });
   }
+  if (n!=='undefined') {
+        // Shuffle the questions
+      let shuffledQuestions = questions.sort(() => 0.5 - Math.random());
 
+      // Get sub-array of first n elements after shuffled
+      let selectedQuestions = shuffledQuestions.slice(0, n);
+
+      let finalData = [];
+      // Fetch difficulty names for each document
+
+      for (let i = 0; i < selectedQuestions.length; i++) {
+        let difficulty;
+        try {
+          difficulty = await difficultyModel.findById(selectedQuestions[i].difficulty);
+        } catch (err) {
+          return res.status(500).json({ message: 'Fetching difficulty failed, please try again later.' });
+        }
+
+        let category;
+        try {
+          category = await categoryModel.findById(selectedQuestions[i].category);
+        } catch (err) {
+          return res.status(500).json({ message: 'Fetching category failed, please try again later.' });
+        }
+
+        finalData.push({
+          ...selectedQuestions[i].toObject({ getters: true }),
+          difficulty: difficulty.name,
+          category: category.name
+        });
+    }
+      return res.status(200).json({ questions: finalData });
+  }
   return res.status(200).json({ questions: questions.map(question => question.toObject({ getters: true })) });
 };
 
@@ -130,7 +153,10 @@ const addQuestion = async (req, res) => {
     return res.status(404).json({ message: 'Could not find difficulty' });
   }
 
-  const createdQuestion = new questionModel({ question: question, options: options, answer: answer, category: categoryObj, difficulty: difficultyObj });
+  const createdQuestion = new questionModel({
+    question: question, options: options, answer: answer,
+    category: categoryObj, difficulty: difficultyObj
+  });
 
   try {
     await createdQuestion.save();
