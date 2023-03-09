@@ -2,6 +2,8 @@ const path = require('path');
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const dotenv = require('dotenv');
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const port = 3001;
 const db = require(path.join(__dirname, 'config', 'mongoose'));
