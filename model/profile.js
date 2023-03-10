@@ -4,6 +4,7 @@ const userModel = require('./user');
 
 const profileSchema = new Schema({
   name: { type: String, required: true },
+  image: { type: String },
   email: { type: String, required: true },
   phoneNo: { type: String, required: true },
   userId: { type: String, required: true, ref: userModel }

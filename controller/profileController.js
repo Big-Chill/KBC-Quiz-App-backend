@@ -1,6 +1,16 @@
 const path = require('path');
+const AWS = require('aws-sdk');
 const profileModel = require(path.join(__dirname, '..', 'model', 'profile'));
 const userModel = require(path.join(__dirname, '..', 'model', 'user'));
+
+const endpoint = new AWS.Endpoint(process.env.ENDPOINT);
+const accessKey = process.env.ACCESS_KEY;
+const secretKey = process.env.SECRET_ACCESS_KEY;
+const s3 = new AWS.S3({
+  endpoint: endpoint,
+  accessKeyId: accessKey,
+  secretAccessKey: secretKey,
+});
 
 // /api/profile/all
 const getAllProfiles = async (req, res) => {
@@ -33,7 +43,9 @@ const isProfilePresent = async (req, res) => {
 
 // /api/profile/add
 const addProfile = async (req, res) => {
-  const { name, email, phoneNo } = req.body;
+  const { name, email, phoneNo } = JSON.parse(req.body.profile);
+  const file = req.file;
+
 
   if (!name || !email || !phoneNo) {
     return res.status(400).json({ message: 'Please enter all fields.' });
@@ -61,7 +73,22 @@ const addProfile = async (req, res) => {
     return res.status(400).json({ message: 'Profile already exists.' });
   }
 
-  const createdProfile = new profileModel({ name: name, email: email, phoneNo: phoneNo, userId: user._id });
+  var imgUrl = '';
+
+  if (file) {
+    const params = {
+      Bucket: `${process.env.BUCKET_NAME}/Profile Images`,
+      Key: `${user._id}_profile image.jpg`,
+      Body: file.buffer,
+
+    };
+    await s3.putObject(params).promise();
+    imgUrl = `${process.env.BUCKET_URL}/Profile Images/${user._id}_profile image.jpg`;
+  }
+
+
+
+  const createdProfile = new profileModel({ name: name, email: email, phoneNo: phoneNo, userId: user._id, image: imgUrl });
 
   try {
     await createdProfile.save();
@@ -94,15 +121,34 @@ const getProfileByUserId = async (req, res) => {
 // /api/profile/update
 const updateProfile = async (req, res) => {
   const { userId } = req.query;
-  const { phoneNo } = req.body;
+  const { phoneNo, oldImgUrl } = JSON.parse(req.body.profile);
+  const file = req.file;
+
 
   if (!phoneNo) {
     return res.status(400).json({ message: 'Please enter your phone number.' });
   }
 
+  var imgUrl = '';
+  if (file) {
+    let params = {
+      Bucket: `${process.env.BUCKET_NAME}/Profile Images`,
+      Key: `${userId}_profile image.jpg`,
+    };
+
+    await s3.deleteObject(params).promise();
+
+    params.Body = file.buffer;
+    await s3.putObject(params).promise();
+    imgUrl = `${process.env.BUCKET_URL}/Profile Images/${userId}_profile image.jpg`;
+  }
+
+  if (oldImgUrl && !file) {
+    imgUrl = oldImgUrl;
+  }
 
   try {
-    let profile = await profileModel.findOneAndUpdate({ userId: userId }, { phoneNo: phoneNo});
+    let profile = await profileModel.findOneAndUpdate({ userId: userId }, { phoneNo: phoneNo, image: imgUrl }, { new: true });
     return res.status(200).json({ message: 'Profile updated successfully.' });
   } catch (err) {
     return res.status(500).json({ message: 'Fetching profile failed, please try again later.' });
