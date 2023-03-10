@@ -1,4 +1,5 @@
 const path = require('path');
+const XLSX = require("xlsx");
 const questionModel = require(path.join(__dirname, '..', 'model', 'question'));
 const categoryModel = require(path.join(__dirname, '..', 'model', 'category'));
 const difficultyModel = require(path.join(__dirname, '..', 'model', 'difficulty'));
@@ -363,6 +364,83 @@ const getQuestionsByCategoryAndDifficulty = async (req, res) => {
   return res.status(200).json({ questions: questions.map(question => question.toObject({ getters: true })) });
 };
 
+
+const addBulkQuestions = async (req, res) => {
+  const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+  const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+  const data = XLSX.utils.sheet_to_json(worksheet);
+
+  for (let i = 0; i < data.length; i++) {
+    const question = data[i]['Question'];
+    const category = data[i]['Category'];
+    const difficulty = data[i]['Difficulty'];
+    const options = [data[i]['Option A'], data[i]['Option B'], data[i]['Option C'], data[i]['Option D']];
+    const answer = data[i]['Correct Answer'];
+
+    let categoryObj;
+    try {
+        categoryObj = await categoryModel.findOne({ name: category });
+    } catch (err) {
+        return res.status(500).json({ message: 'Fetching category failed, please try again later.' });
+    }
+
+    if (!categoryObj) {
+      let newCategory;
+      try {
+        newCategory = new categoryModel({ name: category });
+      } catch (err) {
+        return res.status(500).json({ message: 'Creating category failed, please try again later.' });
+      }
+
+      try {
+        await newCategory.save();
+      } catch (err) {
+        return res.status(500).json({ message: 'Creating category failed, please try again later.' });
+      }
+    }
+
+    let difficultyObj;
+
+    try {
+      difficultyObj = await difficultyModel.findOne({ name: difficulty });
+    } catch (err) {
+      return res.status(500).json({ message: 'Fetching difficulty failed, please try again later.' });
+    }
+
+    if (!difficultyObj) {
+      let newDifficulty;
+      try {
+        newDifficulty = new difficultyModel({ name: difficulty });
+      } catch (err) {
+        return res.status(500).json({ message: 'Creating difficulty failed, please try again later.' });
+      }
+
+      try {
+        await newDifficulty.save();
+      } catch (err) {
+        return res.status(500).json({ message: 'Creating difficulty failed, please try again later.' });
+      }
+    }
+
+
+    const newQuestion = new questionModel({
+      question: question,
+      category: categoryObj,
+      difficulty: difficultyObj,
+      options: options,
+      answer: answer
+    });
+
+    try {
+      await newQuestion.save();
+    } catch (err) {
+      return res.status(500).json({ message: 'Creating question failed, please try again later' });
+    }
+  }
+
+  res.status(200).json({ message: 'Questions added successfully', questions: data });
+};
+
 module.exports = {
   getAllQuestions,
   getTotalCount,
@@ -374,4 +452,5 @@ module.exports = {
   getQuestionsByCategory,
   getQuestionsByDifficulty,
   getQuestionsByCategoryAndDifficulty,
+  addBulkQuestions
 };

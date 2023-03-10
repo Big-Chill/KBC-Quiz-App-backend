@@ -1,4 +1,5 @@
 const path = require('path');
+const bodyParser = require("body-parser");
 const express = require('express');
 const app = express();
 const cors = require('cors');
@@ -22,7 +23,7 @@ const adminRouter = require(path.join(__dirname, 'route', 'adminRouter'));
 const profileRouter = require(path.join(__dirname, 'route', 'profileRouter'));
 const statRouter = require(path.join(__dirname, 'route', 'statRouter'));
 
-
+// app.use(bodyParser.raw({ type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOption));
