@@ -149,7 +149,7 @@ const updateProfile = async (req, res) => {
 
   try {
     let profile = await profileModel.findOneAndUpdate({ userId: userId }, { phoneNo: phoneNo, image: imgUrl }, { new: true });
-    return res.status(200).json({ message: 'Profile updated successfully.' });
+    return res.status(200).json({ message: 'Profile updated successfully.', profile: profile.toObject({ getters: true }) });
   } catch (err) {
     return res.status(500).json({ message: 'Fetching profile failed, please try again later.' });
   }
