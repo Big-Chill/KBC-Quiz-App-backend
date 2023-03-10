@@ -21,7 +21,7 @@ const difficultyRouter = require(path.join(__dirname, 'route', 'difficultyRouter
 const adminRouter = require(path.join(__dirname, 'route', 'adminRouter'));
 const profileRouter = require(path.join(__dirname, 'route', 'profileRouter'));
 const statRouter = require(path.join(__dirname, 'route', 'statRouter'));
-const imageRouter = require(path.join(__dirname, 'route', 'imageRouter'));
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -35,7 +35,7 @@ app.use('/api/difficulty', difficultyRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/profile', profileRouter);
 app.use('/api/stat', statRouter);
-app.use('/api/image', imageRouter);
+
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
