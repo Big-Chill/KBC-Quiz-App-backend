@@ -5,6 +5,7 @@ const userModel = require(path.join(__dirname, '..', 'model', 'user'));
 const adminModel = require(path.join(__dirname, '..', 'model', 'admin'));
 const profileModel = require(path.join(__dirname, '..', 'model', 'profile'));
 const statModel = require(path.join(__dirname, '..', 'model', 'stat'));
+const { isValidEmail } = require(path.join(__dirname, '..', 'util', 'helperFunctions'));
 
 
 // POST /api/user/signup
@@ -13,6 +14,10 @@ const signUp = async (req, res) => {
 
   if (!email || !password) {
     return res.status(400).json({ message: 'Please enter all fields.' });
+  }
+
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ message: 'Invalid email.' });
   }
 
   let existingUser;
